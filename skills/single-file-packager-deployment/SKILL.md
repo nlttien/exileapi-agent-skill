@@ -1,7 +1,7 @@
 ---
 name: single-file-packager-deployment
 description: >-
-  Building, packaging, self-extracting, 2-way config synchronization next to .exe, and releasing standalone All-In-One executables
+  Building, packaging, self-extracting, 1-file JSON sync next to .exe, and releasing standalone All-In-One executables
   (AutoBoss_AllInOne.exe, AutoBuyer_AllInOne.exe) into dist/.
 ---
 
@@ -11,7 +11,7 @@ description: >-
 - Packaging and publishing new bot releases to `dist/`.
 - Fixing issues where new code changes are not reflected in the standalone `.exe`.
 - Debugging `SingleFilePackager` payload extraction, caching, and locked files.
-- 2-way synchronization of `config/` directory residing directly next to the standalone `.exe`.
+- 1-File JSON synchronization (`ShopAutoBuyer_settings.json` / `AutoExile_settings.json`) residing directly next to the standalone `.exe`.
 
 ---
 
@@ -21,22 +21,26 @@ description: >-
 ```powershell
 powershell -ExecutionPolicy Bypass -File "d:\codecuatien\ExileApi-Compiled\BUILD_BOSS_PACKAGE.ps1"
 ```
-**Output**: `d:\codecuatien\ExileApi-Compiled\dist\AutoBoss_AllInOne.exe`
+**Output**:
+- `d:\codecuatien\ExileApi-Compiled\dist\AutoBoss_AllInOne.exe`
+- `d:\codecuatien\ExileApi-Compiled\dist\AutoExile_settings.json` (1 file JSON duy nhất)
 
 ### 2. Build Standalone Buyer Executable
 ```powershell
 powershell -ExecutionPolicy Bypass -File "d:\codecuatien\ExileApi-Compiled\BUILD_PACKAGE.ps1"
 ```
-**Output**: `d:\codecuatien\ExileApi-Compiled\dist\AutoBuyer_AllInOne.exe`
+**Output**:
+- `d:\codecuatien\ExileApi-Compiled\dist\AutoBuyer_AllInOne.exe`
+- `d:\codecuatien\ExileApi-Compiled\dist\ShopAutoBuyer_settings.json` (1 file JSON duy nhất)
 
 ---
 
 ## 🛡️ Critical Packager Rules
-1. **2-Way Config Synchronization Next to .EXE**:
-   - `SingleFilePackager` detects `AppDomain.CurrentDomain.BaseDirectory/config`.
-   - If `config/` exists next to `.exe`, it overwrites the internal engine config so user edits take effect immediately.
-   - If `config/` is absent, it exports the default configuration to `config/` next to `.exe`.
-   - When the bot process exits, it copies all saved in-game settings back to `config/` next to `.exe`.
+1. **1-File JSON Synchronization Next to .EXE**:
+   - `AutoBuyer_AllInOne.exe` detects `ShopAutoBuyer_settings.json` directly next to `.exe`.
+   - `AutoBoss_AllInOne.exe` detects `AutoExile_settings.json` directly next to `.exe`.
+   - When bot starts, it auto-loads that 1 JSON file.
+   - When bot exits, it saves back to that 1 JSON file next to `.exe`.
 2. **Always Overwrite Payload Files**:
    In `SingleFilePackager/Program.cs` and `SingleFilePackager_Boss/Program.cs`:
    ```csharp
