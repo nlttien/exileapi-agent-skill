@@ -44,16 +44,36 @@ BotInput.RapidRightClickAt(absPos);
 
 ---
 
-## 3. Asynchronous Safe Keypress Sequence
+## 3. Shift + RightClick Batch Currency Crafting
 ```csharp
-private static async Task PressKeysAsync(params Keys[] keys)
+// 1. Prime currency on cursor via Shift + RightClick
+MouseHelper.FastDirectMove(currencyScreenPos);
+Input.KeyDown(Keys.LShiftKey);
+Input.RightDown();
+Input.RightUp();
+
+// 2. Left-click every target item in player inventory while holding Shift
+foreach (var item in inventoryItems)
 {
-    foreach (var k in keys)
-    {
-        Input.KeyDown(k);
-        await Task.Delay(30);
-        Input.KeyUp(k);
-        await Task.Delay(50);
-    }
+    MouseHelper.FastDirectMove(item.ScreenPos);
+    Input.LeftDown();
+    Input.LeftUp();
+    Thread.Sleep(craftDelayMs);
 }
+Input.KeyUp(Keys.LShiftKey);
+```
+
+---
+
+## 4. DevTree Currency Slot Traversal Pattern
+```csharp
+// Path: (OpenLeftPanel/StashElement)49->2->0->0->1->1->0->0->1->[SlotIndex]->1
+int[] prefixPath = { 49, 2, 0, 0, 1, 1, 0, 0, 1 };
+Element? elem = stashElement;
+foreach (var idx in prefixPath)
+{
+    if (elem != null && elem.IsValid && idx < elem.Children.Count)
+        elem = elem.Children[idx];
+}
+var slotElement = elem?.Children[slotIndex]?.Children[1] ?? elem?.Children[slotIndex];
 ```
