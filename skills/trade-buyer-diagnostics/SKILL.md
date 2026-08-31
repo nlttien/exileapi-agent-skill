@@ -106,11 +106,12 @@ yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot3Index, nonCorr
   - Automatically opens inventory (`I`), finds the first available empty coordinate in the $12 \times 5$ grid, and clicks to drop the item safely before clicking any other UI element or shop item.
   - Releases Shift, Ctrl, and mouse buttons (`MouseHelper.ReleaseAllInput()`) to unblock stuck keyboard state.
 
-### 5. High-Speed Direct Whisper & Zero Client-Side Rate-Limiting
-- **Zero Client Delays**: All artificial self-imposed 2-second delays and `IsRateLimited` lockouts have been completely removed.
-- **Immediate Response**:
-  - Whispers are dispatched instantly upon discovering trade items.
-  - When an item is sold or missing (404), the queue is immediately refreshed with `ScanCurrentMarketItemsAsync` without artificial sleep pauses.
+### 5. Safe Whisper Interval & Immediate Market Refresh Policy
+- **Minimum Whisper Interval**: Enforce $\ge 2.0\text{s}$ interval (`_whisperLock` enforces 2000ms delay) to prevent GGG server rate-limiting.
+- **Missing / Sold Out Item Recovery**:
+  1. If an item is missing or seller offline (404/failure), clear the stale queue immediately.
+  2. Immediately trigger `ScanCurrentMarketItemsAsync` to find fresh items.
+  3. If still no new items after refresh, enforce a **2.0s delay** before re-polling to prevent spamming GGG endpoints.
 
 ### 6. Log Inspection
 - Inspect `d:\codecuatien\ExileApi-Compiled\ShopAutoBuyer.log` for trade events and deposit histories.
