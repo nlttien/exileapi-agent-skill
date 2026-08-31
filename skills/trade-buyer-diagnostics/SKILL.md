@@ -90,5 +90,12 @@ yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot3Index, nonCorr
 - Check inventory grid bounds before `Ctrl + Click` / `Ctrl + Shift + Click` deposit.
 - Add 40–80ms humanized delay between batch item transfers.
 
-### 4. Log Inspection
+### 4. Safe Whisper & Market Refresh Rate-Limiting Policy
+- **Minimum Whisper Interval**: Never send consecutive whispers faster than $\ge 2.0\text{s}$ (`_whisperLock` enforces 2000ms delay).
+- **Missing / Offline / Sold Out Item Recovery**:
+  1. If an item is missing or seller is offline (404/failure), clear the stale queue immediately.
+  2. Immediately trigger a fresh market search (`ScanCurrentMarketItemsAsync`).
+  3. If no new items exist on market, enforce a mandatory **2.0s delay** before re-polling to prevent GGG HTTP 429 penalties.
+
+### 5. Log Inspection
 - Inspect `d:\codecuatien\ExileApi-Compiled\ShopAutoBuyer.log` for trade events and deposit histories.
