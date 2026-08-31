@@ -90,12 +90,13 @@ for (var pass = 0; pass < 5; pass++)
 yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot3Index, nonCorruptedItems, craftDelay, clicksPerItem: 1);
 ```
 
-### 3. Stash Deposit & Guild Stash Safety
-- Always verify the stash tab is open (`gc.IngameState.IngameUi.StashElement.IsVisible` or `GuildStashElement.IsVisible`).
-- Check inventory grid bounds before `Ctrl + Click` / `Ctrl + Shift + Click` deposit.
+### 3. Stash Deposit & Return to Hideout Safety
+- **Mandatory Return to Own Hideout**: Always send `/hideout` chat command and wait for area load before attempting to open Guild Stash or Personal Stash (Guild Stash is unavailable in seller hideouts).
+- **Deposit Filter Policy**:
+  - `OnlyDepositSixModItems` must only apply to craftable maps/gear.
+  - Invitations, Currency, Map Fragments, Divination Cards, and Uniques must **always** be deposited into the target tab regardless of mod count.
+- **Early AutoCraft Skip**: If inventory contains only uncraftable items (Invitations/Currency), skip the 3-currency crafting routine entirely and deposit immediately.
 - Add 40–80ms humanized delay between batch item transfers.
-
-### 4. Safe Whisper & Market Refresh Rate-Limiting Policy
 - **Minimum Whisper Interval**: Never send consecutive whispers faster than $\ge 2.0\text{s}$ (`_whisperLock` enforces 2000ms delay).
 - **Missing / Offline / Sold Out Item Recovery**:
   1. If an item is missing or seller is offline (404/failure), clear the stale queue immediately.
