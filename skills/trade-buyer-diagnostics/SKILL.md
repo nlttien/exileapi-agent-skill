@@ -2,7 +2,7 @@
 name: trade-buyer-diagnostics
 description: >-
   Troubleshooting and automating player/NPC trading, ShopAutoBuyer window interaction,
-  StashDepositService, Currency Exchange collector, automated 2-currency batch crafting (Rare + Corrupted verification), and PoE Trade WebSocket live search.
+  StashDepositService, Currency Exchange collector, automated 3-currency batch crafting (Slot 5 Rare -> Slot 11 x2 -> Slot 26 Corrupt), and PoE Trade WebSocket live search.
 ---
 
 # Trade Buyer, AutoCraft & Stash Automation Playbook
@@ -10,7 +10,10 @@ description: >-
 ## 🔍 When to Use This Skill
 - `ShopAutoBuyer` fails to click purchase buttons or parse item prices.
 - `StashDepositService` fails to deposit purchased currency or maps into stash tabs / Guild Stash.
-- Automated crafting of bought items with Currency #1 (slot 5 - Alchemy) and Currency #2 (slot 26 - Vaal) before guild deposit.
+- Automated 3-stage crafting of bought items with:
+  1. Currency #1 (Slot 5 - Alchemy): Hóa RARE
+  2. Currency #2 (Slot 11): Click 2 lần mỗi món
+  3. Currency #3 (Slot 26 - Vaal): Ép CORRUPTED
 - Ensuring 100% verification that items become **RARE** (`ItemRarity.Rare`) and **CORRUPTED** (`baseComp.isCorrupted`).
 - `ExchangeCollector` fails to collect completed orders from Faustus Currency Exchange.
 - WebSocket live search disconnects or gets rate-limited by GGG trade servers.
@@ -29,14 +32,15 @@ if (purchaseWindow != null && purchaseWindow.IsVisible)
 }
 ```
 
-### 2. AutoCrafting Bought Items (Rare + Corrupted Guaranteed Verification)
+### 2. AutoCrafting 3-Currency Sequence (Slot 5 -> Slot 11 x2 -> Slot 26)
 When buying invitations or maps in bulk and depositing into Guild Stash:
 
 - **DevTree Slot Navigation**:
   In `StashElement` Currency Tab, currency slots follow the DevTree hierarchy:
   `PathFromRoot: (OpenLeftPanel/StashElement)49->2->0->0->1->1->0->0->1->[SlotIndex]->1`
-  - **Slot 5 (Ảnh 1)**: Alchemy / Rare currency $\rightarrow$ applied to all items until `IsItemRare == true`.
-  - **Slot 26 (Ảnh 2)**: Vaal / Corrupted currency $\rightarrow$ applied to all items until `IsItemCorrupted == true`.
+  - **Slot 5 (Currency 1)**: Nâng cấp tất cả đồ thành RARE (quét RAM đến khi 100% Rare).
+  - **Slot 11 (Currency 2)**: Giữ Shift, click 2 lần trên mỗi món đồ.
+  - **Slot 26 (Currency 3)**: Ép CORRUPTED (quét RAM đến khi 100% Corrupted).
 
 - **State Verification Logic**:
 ```csharp
@@ -53,17 +57,16 @@ public static bool IsItemCorrupted(Entity? entity)
 }
 ```
 
-- **Sequential Crafting Loop**:
+- **Sequential 3-Stage Crafting Routine**:
 ```csharp
-// Pass 1: Ensure all items are Rare
-var nonRare = allItems.Where(i => !IsItemRare(i.Item?.Item) && !IsItemCorrupted(i.Item?.Item)).ToList();
-if (nonRare.Count > 0)
-    yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot1Index, nonRare, craftDelay);
+// Giai đoạn 1: Slot 5 (hóa Rare)
+yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot1Index, nonRareItems, craftDelay, clicksPerItem: 1);
 
-// Pass 2: Ensure all items are Corrupted
-var nonCorrupted = allItems.Where(i => !IsItemCorrupted(i.Item?.Item)).ToList();
-if (nonCorrupted.Count > 0)
-    yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot2Index, nonCorrupted, craftDelay);
+// Giai đoạn 2: Slot 11 (click 2 lần mỗi món)
+yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot2Index, craftableItems, craftDelay, clicksPerItem: 2);
+
+// Giai đoạn 3: Slot 26 (ép Corrupt)
+yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot3Index, nonCorruptedItems, craftDelay, clicksPerItem: 1);
 ```
 
 ### 3. Stash Deposit & Guild Stash Safety
