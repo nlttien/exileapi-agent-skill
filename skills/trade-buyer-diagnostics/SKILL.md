@@ -2,7 +2,7 @@
 name: trade-buyer-diagnostics
 description: >-
   Troubleshooting and automating player/NPC trading, ShopAutoBuyer window interaction,
-  StashDepositService, Currency Exchange collector, automated 3-currency batch crafting (Slot 5 Rare -> Slot 11 x2 -> Slot 26 Corrupt), and PoE Trade WebSocket live search.
+  StashDepositService, Currency Exchange collector, automated 3-currency batch crafting (Slot 5 Rare -> Slot 11 x2 -> Slot 26 Corrupt + 8-Mod check), and PoE Trade WebSocket live search.
 ---
 
 # Trade Buyer, AutoCraft & Stash Automation Playbook
@@ -14,7 +14,10 @@ description: >-
   1. Currency #1 (Slot 5 - Alchemy): Hóa RARE
   2. Currency #2 (Slot 11): Click 2 lần mỗi món
   3. Currency #3 (Slot 26 - Vaal): Ép CORRUPTED
-- Ensuring 100% verification that items become **RARE** (`ItemRarity.Rare`) and **CORRUPTED** (`baseComp.isCorrupted`).
+- Ensuring 100% RAM verification:
+  - **RARE** (`ItemRarity.Rare`)
+  - **CORRUPTED** (`baseComp.isCorrupted`)
+  - **8-MODIFIER CORRUPTED** (`IsItemCorrupted && mods.ExplicitMods.Count >= 8`)
 - `ExchangeCollector` fails to collect completed orders from Faustus Currency Exchange.
 - WebSocket live search disconnects or gets rate-limited by GGG trade servers.
 
@@ -32,7 +35,7 @@ if (purchaseWindow != null && purchaseWindow.IsVisible)
 }
 ```
 
-### 2. AutoCrafting 3-Currency Sequence (Slot 5 -> Slot 11 x2 -> Slot 26)
+### 2. AutoCrafting 3-Currency Sequence (Slot 5 -> Slot 11 x2 -> Slot 26 + 8-Mod Scan)
 When buying invitations or maps in bulk and depositing into Guild Stash:
 
 - **DevTree Slot Navigation**:
@@ -42,7 +45,7 @@ When buying invitations or maps in bulk and depositing into Guild Stash:
   - **Slot 11 (Currency 2)**: Giữ Shift, click 2 lần trên mỗi món đồ.
   - **Slot 26 (Currency 3)**: Ép CORRUPTED (quét RAM đến khi 100% Corrupted).
 
-- **State Verification Logic**:
+- **State & 8-Modifier Verification Logic**:
 ```csharp
 public static bool IsItemRare(Entity? entity)
 {
@@ -54,6 +57,19 @@ public static bool IsItemCorrupted(Entity? entity)
 {
     var baseComp = entity?.GetComponent<Base>();
     return baseComp != null && baseComp.isCorrupted;
+}
+
+public static int GetItemExplicitModCount(Entity? entity)
+{
+    var mods = entity?.GetComponent<Mods>();
+    if (mods == null) return 0;
+    if (mods.ExplicitMods != null && mods.ExplicitMods.Count > 0) return mods.ExplicitMods.Count;
+    return mods.ItemMods?.Count ?? 0;
+}
+
+public static bool IsEightModCorrupted(Entity? entity)
+{
+    return IsItemCorrupted(entity) && GetItemExplicitModCount(entity) >= 8;
 }
 ```
 
