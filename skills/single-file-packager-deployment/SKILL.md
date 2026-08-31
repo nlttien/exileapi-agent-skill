@@ -1,7 +1,7 @@
 ---
 name: single-file-packager-deployment
 description: >-
-  Building, packaging, self-extracting, and releasing standalone All-In-One executables
+  Building, packaging, self-extracting, 2-way config synchronization next to .exe, and releasing standalone All-In-One executables
   (AutoBoss_AllInOne.exe, AutoBuyer_AllInOne.exe) into dist/.
 ---
 
@@ -11,6 +11,7 @@ description: >-
 - Packaging and publishing new bot releases to `dist/`.
 - Fixing issues where new code changes are not reflected in the standalone `.exe`.
 - Debugging `SingleFilePackager` payload extraction, caching, and locked files.
+- 2-way synchronization of `config/` directory residing directly next to the standalone `.exe`.
 
 ---
 
@@ -31,12 +32,17 @@ powershell -ExecutionPolicy Bypass -File "d:\codecuatien\ExileApi-Compiled\BUILD
 ---
 
 ## 🛡️ Critical Packager Rules
-1. **Always Overwrite Payload Files**:
+1. **2-Way Config Synchronization Next to .EXE**:
+   - `SingleFilePackager` detects `AppDomain.CurrentDomain.BaseDirectory/config`.
+   - If `config/` exists next to `.exe`, it overwrites the internal engine config so user edits take effect immediately.
+   - If `config/` is absent, it exports the default configuration to `config/` next to `.exe`.
+   - When the bot process exits, it copies all saved in-game settings back to `config/` next to `.exe`.
+2. **Always Overwrite Payload Files**:
    In `SingleFilePackager/Program.cs` and `SingleFilePackager_Boss/Program.cs`:
    ```csharp
    try { entry.ExtractToFile(destPath, true); } catch { /* Ignore locked files */ }
    ```
-2. **Dual DLL Copy**:
+3. **Dual DLL Copy**:
    Always copy output assemblies to both `Plugins/Compiled/<Name>/` and `Plugins/Compiled/<Name>.dll`.
-3. **Clean Temp Package**:
+4. **Clean Temp Package**:
    Always remove stale `payload.zip` and `temp_pkg/` before zipping.
