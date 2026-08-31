@@ -75,13 +75,18 @@ public static bool IsModCountCorrupted(Entity? entity, int requiredMods = 6)
 
 - **Sequential 3-Stage Crafting Routine**:
 ```csharp
-// Giai đoạn 1: Slot 5 (hóa Rare)
+// Giai đoạn 1: Slot 5 (hóa Rare - quét RAM 100% Rare)
 yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot1Index, nonRareItems, craftDelay, clicksPerItem: 1);
 
-// Giai đoạn 2: Slot 11 (click 2 lần mỗi món)
-yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot2Index, craftableItems, craftDelay, clicksPerItem: 2);
+// Giai đoạn 2: Slot 11 (Tính toán và kiểm tra RAM động: đập liên tục cho đến khi đạt 20% Quality / Max Mods trước khi chuyển sang bước kế tiếp)
+for (var pass = 0; pass < 5; pass++)
+{
+    var itemsNeedingUpgrade = allItems.Where(i => CanItemUseSecondCurrency(i.Item?.Item, slot2Mode, reqMods, clicksDone, maxClicks)).ToList();
+    if (itemsNeedingUpgrade.Count == 0) break;
+    yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot2Index, itemsNeedingUpgrade, craftDelay, clicksPerItem: 1);
+}
 
-// Giai đoạn 3: Slot 26 (ép Corrupt)
+// Giai đoạn 3: Slot 26 (ép Corrupt - quét RAM 100% Corrupted)
 yield return ApplyCurrencyToTargetItemsRoutine(stashElement, slot3Index, nonCorruptedItems, craftDelay, clicksPerItem: 1);
 ```
 
