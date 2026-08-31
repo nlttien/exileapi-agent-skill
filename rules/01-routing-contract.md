@@ -20,5 +20,8 @@ Every task handled by an agent in this repository must follow a strict, non-impr
 ### Phase 4: Compilation Verification
 - Run `dotnet build <path-to-csproj>` to confirm `0 Warning(s) / 0 Error(s)` (or standard warning tolerance with 0 errors).
 
-### Phase 5: Knowledge Retention
-- If the change resolves a recurring or subtle problem, record it in `.agents/knowledge-base/FIELD_JOURNAL.md`.
+### Phase 5: Mandatory Skill & Knowledge Evolution (Bắt buộc)
+- If the task involved a new edge case, new boss timing, new offset structure, or new bug pattern:
+  1. **Update `skills/<skill-name>/SKILL.md`**: Directly add the new discovery/rules into the skill playbook.
+  2. **Log to `FIELD_JOURNAL.md`**: Record the post-mortem with root cause and prevention rule.
+  3. **Sync to `COMMON_PATTERNS.md`**: If a new reusable code pattern was created.
